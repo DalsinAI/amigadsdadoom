@@ -1,0 +1,26 @@
+DSDA-Doom needs a game's IWAD
+============================
+
+No game data comes with DSDA-Doom. Put one of these in the DSDADoom
+drawer (the names in lower case, as here):
+
+  doom1.wad       Doom shareware (free to give away)
+  doom.wad        The Ultimate Doom / Doom registered
+  doom2.wad       Doom II
+  tnt.wad         Final Doom: TNT Evilution
+  plutonia.wad    Final Doom: The Plutonia Experiment
+  freedoom1.wad   Freedoom Phase 1 (free, https://freedoom.github.io)
+  freedoom2.wad   Freedoom Phase 2
+  heretic.wad     Heretic (registered; the shareware heretic1.wad
+                  with -iwad heretic1.wad -heretic)
+  hexen.wad       Hexen
+
+or name one: dsda-doom -iwad Work:WADs/doom2.wad
+DOOMWADDIR and DOOMWADPATH (drawers separated by ';') are read from ENV:.
+
+dsda-doom.wad, beside the program, is not an IWAD: it is DSDA-Doom's own
+resource file (fonts, menu art, tables), built from its GPL sources, and
+the game will not start without it.
+
+PWADs are added with -file; demos are played with -playdemo, -timedemo
+or -fastdemo.

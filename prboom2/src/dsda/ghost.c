@@ -46,6 +46,25 @@ typedef struct {
   int tic;
 } dsda_ghost_frame_t;
 
+#ifdef __amigaos__
+#include "m_swap.h"
+
+// Ghost files (.gst) are the little-endian machine's ints written as they
+// lie (the version, the player count, then nine ints a frame). On the 68k
+// they are swapped as they are written and read, so ghosts recorded here
+// and on other systems play on both.
+static void dsda_SwapGhostInts(void* data, size_t size) {
+  int* p = data;
+  size_t n;
+
+  for (n = size / sizeof(int); n > 0; --n, ++p)
+    *p = LittleLong(*p);
+}
+#define GHOST_LE(data, size) dsda_SwapGhostInts((data), (size))
+#else
+#define GHOST_LE(data, size)
+#endif
+
 typedef struct {
   dsda_ghost_frame_t frame;
   mobj_t* mobj;
@@ -105,6 +124,7 @@ void dsda_InitGhostExport(const char* name) {
     I_Error("dsda_InitGhostExport: failed to open %s", name);
 
   version = DSDA_GHOST_VERSION;
+  GHOST_LE(&version, sizeof(int));
   fwrite(&version, sizeof(int), 1, dsda_ghost_export);
 
   free(filename);
@@ -124,11 +144,15 @@ void dsda_OpenGhostFile(int arg_i, dsda_ghost_file_t* ghost_file) {
     I_Error("dsda_OpenGhostImport: failed to open %s", myargv[arg_i]);
 
   fread(&ghost_file->version, sizeof(int), 1, ghost_file->fstream);
+  GHOST_LE(&ghost_file->version, sizeof(int));
   if (ghost_file->version < DSDA_GHOST_MIN_VERSION || ghost_file->version > DSDA_GHOST_VERSION)
     I_Error("dsda_OpenGhostImport: unsupported ghost version %s", myargv[arg_i]);
 
   if (ghost_file->version == 1) ghost_file->count = 1;
-  else fread(&ghost_file->count, sizeof(int), 1, ghost_file->fstream);
+  else {
+    fread(&ghost_file->count, sizeof(int), 1, ghost_file->fstream);
+    GHOST_LE(&ghost_file->count, sizeof(int));
+  }
 
   free(filename);
 }
@@ -181,6 +205,7 @@ void dsda_ExportGhostFrame(void) {
 
     for (i = 0; i < g_maxplayers; ++i) if (playeringame[i]) ++count;
 
+    GHOST_LE(&count, sizeof(int));
     fwrite(&count, sizeof(int), 1, dsda_ghost_export);
 
     return;
@@ -203,6 +228,7 @@ void dsda_ExportGhostFrame(void) {
     ghost_frame.episode = gameepisode;
     ghost_frame.tic = gametic;
 
+    GHOST_LE(&ghost_frame, sizeof(dsda_ghost_frame_t));
     fwrite(&ghost_frame, sizeof(dsda_ghost_frame_t), 1, dsda_ghost_export);
   }
 }
@@ -311,6 +337,7 @@ void dsda_UpdateGhosts(void* _void) {
         ghost->fstream = NULL;
         break;
       }
+      GHOST_LE(&ghost->frame, sizeof(dsda_ghost_frame_t));
     } while (ghost_was_behind && ghost->frame.map != gamemap);
 
     if (ghost->fstream == NULL) continue;

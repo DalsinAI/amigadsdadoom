@@ -320,6 +320,37 @@ const char* I_GetTempDir(void)
   return tmp_path;
 }
 
+#elif defined(__amigaos__)
+
+#include <proto/dos.h>
+
+// The program's drawer, as a full AmigaDOS name ("Work:Games/DSDADoom"):
+// the config file, autoload, screenshots and dsda_doom_data are made in it
+// with "%s/name", which "PROGDIR:" would turn into the parent drawer.
+// (At a volume's root the name ends in ':', and "Work:/name" is no better;
+// the ReadMe says to put the drawer in a drawer.)
+const char *I_DoomExeDir(void)
+{
+  static char *base;
+
+  if (!base)
+  {
+    static char name[1024];
+    BPTR lock = GetProgramDir();
+
+    if (lock && NameFromLock(lock, (STRPTR) name, sizeof(name)))
+      base = name;
+    else
+      base = "PROGDIR:";
+  }
+  return base;
+}
+
+const char* I_GetTempDir(void)
+{
+  return "T:";
+}
+
 #elif defined(AMIGA)
 
 const char *I_DoomExeDir(void)
@@ -392,7 +423,8 @@ dboolean HasTrailingSlash(const char* dn)
  * The dirs are listed at the start of the function
  */
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__amigaos__)
+// AmigaDOS: ':' ends a volume or assign name ("Work:WADs").
 #define PATH_SEPARATOR ';'
 #else
 #define PATH_SEPARATOR ':'

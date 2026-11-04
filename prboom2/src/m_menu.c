@@ -3149,7 +3149,11 @@ extern int detect_voices, realtic_clock_rate, tran_filter_pct;
 extern int mouse_stutter_correction;
 
 setup_menu_t video_settings[], audio_settings[], device_settings[], misc_settings[];
+#ifdef GL_DOOM
 setup_menu_t display_settings[], opengl_settings1[], opengl_settings2[];
+#else
+setup_menu_t display_settings[];
+#endif
 setup_menu_t mapping_settings[], demo_settings[], tas_settings[];
 
 setup_menu_t* gen_settings[] =
@@ -3159,8 +3163,10 @@ setup_menu_t* gen_settings[] =
   device_settings,
   misc_settings,
   display_settings,
+#ifdef GL_DOOM
   opengl_settings1,
   opengl_settings2,
+#endif
   mapping_settings,
   demo_settings,
   tas_settings,
@@ -3340,10 +3346,17 @@ setup_menu_t display_settings[] = {
   { "Integer Screen Scaling", S_YESNO, m_null, G_X, G_Y + 17 * 8, { "integer_scaling" }, 0, M_ChangeScreenMultipleFactor },
 
   { "<-", S_SKIP | S_PREV, m_null, KB_PREV, KB_Y + 20 * 8, { misc_settings } },
+#ifdef GL_DOOM
   { "->", S_SKIP | S_NEXT, m_null, KB_NEXT, KB_Y + 20 * 8, { opengl_settings1 } },
+#else
+  // A build without OpenGL (the AmigaOS one) has no OpenGL pages: their
+  // callbacks are in the GL renderer.
+  { "->", S_SKIP | S_NEXT, m_null, KB_NEXT, KB_Y + 20 * 8, { mapping_settings } },
+#endif
   { 0, S_SKIP | S_END, m_null }
 };
 
+#ifdef GL_DOOM
 setup_menu_t opengl_settings1[] = {
   { "OpenGL Options 1", S_SKIP | S_TITLE, m_null, G_X, G_Y + 1 * 8},
   { "Multisampling (0-None)", S_NUM | S_PRGWARN | S_CANT_GL_ARB_MULTISAMPLEFACTOR, m_null, G_X, G_Y + 2 * 8, { "render_multisampling" }, 0, M_ChangeMultiSample },
@@ -3387,6 +3400,7 @@ setup_menu_t opengl_settings2[] = {
   { "->", S_SKIP | S_NEXT, m_null, KB_NEXT, KB_Y + 20 * 8, { mapping_settings } },
   { 0, S_SKIP | S_END, m_null }
 };
+#endif
 
 setup_menu_t mapping_settings[] = {
   { "EMULATION", S_SKIP | S_TITLE, m_null, G_X, G_Y + 1 * 8},
@@ -3410,7 +3424,11 @@ setup_menu_t mapping_settings[] = {
   { "FIX CLIPPING IN LARGE LEVELS", S_YESNO, m_null, G_X, G_Y + 19 * 8, { "comperr_blockmap" } },
   { "ALLOW VERTICAL AIMING", S_YESNO, m_null, G_X, G_Y + 20 * 8, { "comperr_freeaim" } },
 
+#ifdef GL_DOOM
   { "<-", S_SKIP | S_PREV, m_null, KB_PREV, KB_Y + 20 * 8, { opengl_settings2 } },
+#else
+  { "<-", S_SKIP | S_PREV, m_null, KB_PREV, KB_Y + 20 * 8, { display_settings } },
+#endif
   { "->", S_SKIP | S_NEXT, m_null, KB_NEXT, KB_Y + 20 * 8, { demo_settings } },
   { 0, S_SKIP | S_END, m_null }
 };

@@ -356,15 +356,29 @@ default_t defaults[] =
    def_int,ss_none}, // select music driver (DOS), -1 is autodetect, 0 is none"; in Linux, non-zero enables music
   {"pitched_sounds",{&pitched_sounds},{0},0,1, // killough 2/21/98
    def_bool,ss_none}, // enables variable pitch in sound effects (from id's original code)
+#ifdef __amigaos__
+  // A 68040 mixes the game's own sound and OPL music: half the work.
+  {"samplerate",{&snd_samplerate},{22050},11025,48000, def_int,ss_none},
+#else
   {"samplerate",{&snd_samplerate},{44100},11025,48000, def_int,ss_none},
+#endif
   {"slice_samplecount",{&snd_samplecount},{512},32,8192, def_int,ss_none},
   {"sfx_volume",{&snd_SfxVolume},{8},0,15, def_int,ss_none},
   {"music_volume",{&snd_MusicVolume},{8},0,15, def_int,ss_none},
   {"mus_pause_opt",{&mus_pause_opt},{1},0,2, // CPhipps - music pausing
    def_int, ss_none}, // 0 = kill music when paused, 1 = pause music, 2 = let music continue
+#ifdef __amigaos__
+  {"snd_channels",{&default_numChannels},{8},1,32, // Doom's own number
+#else
   {"snd_channels",{&default_numChannels},{32},1,32,
+#endif
    def_int,ss_none}, // number of audio events simultaneously // killough
+#ifdef __amigaos__
+  // No FluidSynth or PortMidi in the AmigaOS build: OPL2 emulation only.
+  {"snd_midiplayer",{NULL, &snd_midiplayer},{0,"opl2"},UL,UL,def_str,ss_none},
+#else
   {"snd_midiplayer",{NULL, &snd_midiplayer},{0,"fluidsynth"},UL,UL,def_str,ss_none},
+#endif
   {"snd_soundfont",{NULL, &snd_soundfont},{0,""},UL,UL,def_str,ss_none},
   {"snd_mididev",{NULL, &snd_mididev},{0,""},UL,UL,def_str,ss_none}, // midi device to use for portmidiplayer
   {"full_sounds",{&full_sounds},{0},0,1,def_bool,ss_none}, // disable sound cutoffs
@@ -381,9 +395,19 @@ default_t defaults[] =
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"videomode",{NULL, &default_videomode},{0,"Software"},UL,UL,def_str,ss_none},
   /* 640x480 default resolution */
+#ifdef __amigaos__
+  // Doom's own 320x200 on a full screen: a 68040 draws a quarter of the
+  // pixels of 640x400 (higher modes are in the menu, as elsewhere).
+  {"screen_resolution",{NULL, &screen_resolution},{0,"320x200"},UL,UL,def_str,ss_none},
+#else
   {"screen_resolution",{NULL, &screen_resolution},{0,"640x480"},UL,UL,def_str,ss_none},
+#endif
   {"custom_resolution",{0,&custom_resolution},{0,""},UL,UL,def_str,ss_chat},
+#ifdef __amigaos__
+  {"use_fullscreen",{&use_fullscreen},{1},0,1,
+#else
   {"use_fullscreen",{&use_fullscreen},{0},0,1, /* proff 21/05/2000 */
+#endif
    def_bool,ss_none},
   {"exclusive_fullscreen",{&exclusive_fullscreen},{0},0,1, // [FG] mode-changing fullscreen
   def_bool,ss_none},
@@ -396,7 +420,13 @@ default_t defaults[] =
    def_int,ss_none},
   {"usegamma",{&usegamma},{0},0,4, //jff 3/6/98 fix erroneous upper limit in range
    def_int,ss_none}, // gamma correction level // killough 1/18/98
+#ifdef __amigaos__
+  // Doom's 35 frames a second: interpolated frames are more than a 68040
+  // can draw.
+  {"uncapped_framerate", {&movement_smooth_default},  {0},0,1,
+#else
   {"uncapped_framerate", {&movement_smooth_default},  {1},0,1,
+#endif
    def_bool,ss_stat},
   {"dsda_fps_limit", {&dsda_fps_limit}, {0}, 0, 1000, def_int, ss_stat},
   {"filter_wall",{(int*)&drawvars.filterwall},{RDRAW_FILTER_POINT},
@@ -793,7 +823,12 @@ default_t defaults[] =
    def_int,ss_none}, /* adjust vertical (y) mouse sensitivity killough/mead */
 
   {"Joystick settings",{NULL},{0},UL,UL,def_none,ss_none},
+#ifdef __amigaos__
+  // The first pad (GFOpenInput's CD32 pad, through SDL), if there is one.
+  {"use_joystick",{&usejoystick},{1},0,2,
+#else
   {"use_joystick",{&usejoystick},{0},0,2,
+#endif
    def_int,ss_none}, // number of joystick to use (0 for none)
 
   {"Chat macros",{NULL},{0},UL,UL,def_none,ss_none},

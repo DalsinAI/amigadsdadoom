@@ -306,6 +306,25 @@ void W_FreePWADTable(wadtbl_t *wadtbl)
   free(wadtbl->data);
 }
 
+#ifdef __amigaos__
+// A demo footer is a PWAD: its header and directory are little-endian in
+// the file, as in every WAD. The table is built in the machine's order;
+// this turns it round (either way) for writing, numlumps being given since
+// the header may be the swapped one.
+static void W_SwapPWADTable(wadtbl_t *wadtbl, int numlumps)
+{
+  int i;
+
+  wadtbl->header.numlumps = LittleLong(wadtbl->header.numlumps);
+  wadtbl->header.infotableofs = LittleLong(wadtbl->header.infotableofs);
+  for (i = 0; i < numlumps; i++)
+  {
+    wadtbl->lumps[i].filepos = LittleLong(wadtbl->lumps[i].filepos);
+    wadtbl->lumps[i].size = LittleLong(wadtbl->lumps[i].size);
+  }
+}
+#endif
+
 void W_AddLump(wadtbl_t *wadtbl, const char *name, const byte* data, size_t size)
 {
   int lumpnum;
@@ -419,6 +438,15 @@ angle_t R_DemoEx_ReadMLook(void)
         mlook_lump.maxtick = size / sizeof(mlook_lump.data[0]);
         mlook_lump.data = malloc(size);
         memcpy(mlook_lump.data, data, size);
+#ifdef __amigaos__
+        {
+          // MLOOK is little-endian shorts, a pitch per tic.
+          int t;
+
+          for (t = 0; t < mlook_lump.maxtick; t++)
+            mlook_lump.data[t] = LittleShort(mlook_lump.data[t]);
+        }
+#endif
       }
     }
   }
@@ -828,8 +856,20 @@ static void R_DemoEx_AddMouseLookData(wadtbl_t *wadtbl)
   {
     if (mlook_lump.data[i] != 0)
     {
+#ifdef __amigaos__
+      // Written little-endian, as other ports write and read it.
+      int t;
+      short *le = malloc(mlook_lump.tick * sizeof(mlook_lump.data[0]));
+
+      for (t = 0; t < (int)mlook_lump.tick; t++)
+        le[t] = LittleShort(mlook_lump.data[t]);
+      W_AddLump(wadtbl, mlook_lump.name,
+        (const byte*)le, mlook_lump.tick * sizeof(mlook_lump.data[0]));
+      free(le);
+#else
       W_AddLump(wadtbl, mlook_lump.name,
         (const byte*)mlook_lump.data, mlook_lump.tick * sizeof(mlook_lump.data[0]));
+#endif
       break;
     }
     i++;
@@ -947,6 +987,9 @@ void G_SetDemoFooter(const char *filename, wadtbl_t *wadtbl)
       int datasize = wadtbl->datasize;
       int lumpssize = wadtbl->header.numlumps * sizeof(wadtbl->lumps[0]);
 
+#ifdef __amigaos__
+      W_SwapPWADTable(wadtbl, wadtbl->header.numlumps);
+#endif
       //write pwad header, all data and lookup table to the end of a demo
       if (
         fwrite(buffer, demosize, 1, hfile) != 1 ||
@@ -957,6 +1000,9 @@ void G_SetDemoFooter(const char *filename, wadtbl_t *wadtbl)
       {
         I_Error("G_SetDemoFooter: error writing");
       }
+#ifdef __amigaos__
+      W_SwapPWADTable(wadtbl, LittleLong(wadtbl->header.numlumps));
+#endif
 
       fclose(hfile);
     }
@@ -983,6 +1029,32 @@ int CheckWadBufIntegrity(const char *buffer, size_t size)
     if (strncmp(header->identification, "IWAD", 4) == 0 ||
         strncmp(header->identification, "PWAD", 4) == 0)
     {
+#ifdef __amigaos__
+      // Checked without swapping the header in place: the buffer is then
+      // written out as demoex.wad, which W_AddFile reads little-endian.
+      int numlumps = LittleLong(header->numlumps);
+      int infotableofs = LittleLong(header->infotableofs);
+
+      length = numlumps * sizeof(filelump_t);
+
+      if (numlumps >= 0 && infotableofs >= 0 && infotableofs + length <= size)
+      {
+        fileinfo = (const filelump_t*)(buffer + infotableofs);
+        for (i = 0; i < numlumps; i++, fileinfo++)
+        {
+          int filepos = LittleLong(fileinfo->filepos);
+          int lumpsize = LittleLong(fileinfo->size);
+
+          if (filepos < 0 ||
+              filepos > infotableofs ||
+              filepos + lumpsize > infotableofs)
+          {
+            break;
+          }
+        }
+        result = (i == numlumps);
+      }
+#else
       header->numlumps = LittleLong(header->numlumps);
       header->infotableofs = LittleLong(header->infotableofs);
       length = header->numlumps * sizeof(filelump_t);
@@ -1001,6 +1073,7 @@ int CheckWadBufIntegrity(const char *buffer, size_t size)
         }
         result = (i == header->numlumps);
       }
+#endif
     }
   }
 
@@ -1035,6 +1108,11 @@ int CheckWadFileIntegrity(const char *filename)
         {
           for (i = 0; i < header.numlumps; i++, fileinfo++)
           {
+#ifdef __amigaos__
+            // The directory is little-endian too.
+            fileinfo->filepos = LittleLong(fileinfo->filepos);
+            fileinfo->size = LittleLong(fileinfo->size);
+#endif
             if (fileinfo->filepos < 0 ||
               fileinfo->filepos > header.infotableofs ||
               fileinfo->filepos + fileinfo->size > header.infotableofs)
@@ -1210,9 +1288,21 @@ void G_WriteDemoFooter(void)
   W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //write pwad header, all data and lookup table to the end of a demo
+#ifdef __amigaos__
+  {
+    int numlumps = demoex.header.numlumps;
+
+    W_SwapPWADTable(&demoex, numlumps);
+    dsda_WriteToDemo(&demoex.header, sizeof(demoex.header));
+    dsda_WriteToDemo(demoex.data, demoex.datasize);
+    dsda_WriteToDemo(demoex.lumps, numlumps * sizeof(demoex.lumps[0]));
+    W_SwapPWADTable(&demoex, numlumps);
+  }
+#else
   dsda_WriteToDemo(&demoex.header, sizeof(demoex.header));
   dsda_WriteToDemo(demoex.data, demoex.datasize);
   dsda_WriteToDemo(demoex.lumps, demoex.header.numlumps * sizeof(demoex.lumps[0]));
+#endif
 }
 
 int WadDataInit(waddata_t *waddata)

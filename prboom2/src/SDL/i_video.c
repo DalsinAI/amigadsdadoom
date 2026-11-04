@@ -634,7 +634,9 @@ void I_SetPalette (int pal)
 
 static void I_ShutdownSDL(void)
 {
+#ifdef GL_DOOM
   if (sdl_glcontext) SDL_GL_DeleteContext(sdl_glcontext);
+#endif
   if (screen) SDL_FreeSurface(screen);
   if (buffer) SDL_FreeSurface(buffer);
   if (sdl_texture) SDL_DestroyTexture(sdl_texture);
@@ -1200,7 +1202,11 @@ void I_UpdateVideoMode(void)
 
     I_InitScreenResolution();
 
+#ifdef GL_DOOM
+    // Without the GL renderer there is never a GL context; not calling
+    // SDL_GL_* keeps SDL's OpenGL half (and GL.module) out of the program.
     if (sdl_glcontext) SDL_GL_DeleteContext(sdl_glcontext);
+#endif
     if (screen) SDL_FreeSurface(screen);
     if (buffer) SDL_FreeSurface(buffer);
     if (sdl_texture) SDL_DestroyTexture(sdl_texture);
