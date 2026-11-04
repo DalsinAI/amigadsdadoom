@@ -1,0 +1,75 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches-ignore:
+    - build_windows_dependencies
+  pull_request:
+    branches-ignore:
+    - build_windows_dependencies
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Visual Studio 64-bit",
+            os: windows-2019,
+            build_type: "Release",
+            extra_options: "-A x64",
+            package_name: "vs_x64"
+          }
+        - {
+            name: "Linux GCC",
+            os: ubuntu-20.04,
+            build_type: "Release",
+            extra_options: "",
+            package_name: "linux_gcc"
+          }
+        - {
+            name: "macOS Clang",
+            os: macos-10.15,
+            build_type: "Release",
+            extra_options: "",
+            package_name: "macos"
+          }
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        mkdir build
+        cd build
+        if [[ "${{ runner.os }}" == 'Windows' ]]; then
+          declare -x DEPS_FILENAME=windows_dependencies_v4.zip
+          curl -LO https://github.com/coelckers/prboom-plus/releases/download/windows_dependencies/${DEPS_FILENAME}
+          7z x ${DEPS_FILENAME} -o..
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          sudo apt update
+          sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+            libpcre3-dev libmad0-dev libfluidsynth-dev libdumb1-dev libvorbis-dev libportmidi-dev
+        elif [[ "${{ runner.os }}" == 'macOS' ]]; then
+          brew install sdl2 sdl2_image sdl2_mixer pcre mad fluidsynth dumb portmidi
+        fi
+
+    - name: Configure
+      shell: bash
+      run: |
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.extra_options }} ../prboom2
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        if [[ "${{ runner.os }}" == 'Windows' ]]; then
+          cmake --build . --config ${{ matrix.config.build_type }} -- -maxcpucount -verbosity:minimal
+        else
+          cmake --build . -- --jobs=2 --keep-going
+        fi
