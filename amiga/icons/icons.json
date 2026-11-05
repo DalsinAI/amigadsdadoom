@@ -1,0 +1,11 @@
+{
+  "about": "The Workbench icons of the DSDADoom drawer: python3 AMICRADLE/scripts/port_icons.py amiga/icons/icons.json --out amiga/icons (DalsinAI/amicradle). The art is DSDA-Doom's own program icon (prboom2/ICONS/dsda-doom.png at the pinned commit, cropped square and scaled to 128 x 128), GPL-2.0-or-later with the engine.",
+  "drawer": {"name": "DSDADoom"},
+  "badge": "art/dsda-doom.png",
+  "icons": [
+    {"file": "dsda-doom.info", "kind": "tool", "stack": 1048576},
+    {"file": "ReadMe.info", "kind": "readme"},
+    {"file": "IWAD-ReadMe.info", "kind": "readme"},
+    {"file": "COPYING.txt.info", "kind": "readme"}
+  ]
+}

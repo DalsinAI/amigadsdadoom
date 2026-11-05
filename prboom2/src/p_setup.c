@@ -2960,7 +2960,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   char  lumpname[9];
   int   lumpnum;
 
+#ifdef __amigaos__
+  char  gl_lumpname[9 + 3]; // "GL_" and an 8-character map name ("MAP100")
+#else
   char  gl_lumpname[9];
+#endif
   int   gl_lumpnum;
 
   //e6y

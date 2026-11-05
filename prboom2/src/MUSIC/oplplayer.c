@@ -81,6 +81,15 @@ typedef struct
     genmidi_voice_t voices[2];
 } PACKEDATTR genmidi_instr_t;
 
+#ifdef __amigaos__
+// GENMIDI's flags are a little-endian short, like base_note_offset (which
+// is read with doom_htows); unswapped, a big-endian machine tests the
+// wrong byte and plays fixed-note drums and two-voice instruments wrong.
+#define GENMIDI_FLAGS(instr) ((unsigned short) doom_htows((instr)->flags))
+#else
+#define GENMIDI_FLAGS(instr) ((instr)->flags)
+#endif
+
 // Data associated with a channel of a track that is currently playing.
 
 typedef struct
@@ -728,7 +737,7 @@ static unsigned int FrequencyForVoice(opl_voice_t *voice)
 
     gm_voice = &voice->current_instr->voices[voice->current_instr_voice];
 
-    if ((voice->current_instr->flags & GENMIDI_FLAG_FIXED) == 0)
+    if ((GENMIDI_FLAGS(voice->current_instr) & GENMIDI_FLAG_FIXED) == 0)
     {
         note += (signed short) doom_htows(gm_voice->base_note_offset);
     }
@@ -845,7 +854,7 @@ static void VoiceKeyOn(opl_channel_data_t *channel,
     // Work out the note to use.  This is normally the same as
     // the key, unless it is a fixed pitch instrument.
 
-    if ((instrument->flags & GENMIDI_FLAG_FIXED) != 0)
+    if ((GENMIDI_FLAGS(instrument) & GENMIDI_FLAG_FIXED) != 0)
     {
         voice->note = instrument->fixed_note;
     }
@@ -917,7 +926,7 @@ static void KeyOnEvent(opl_track_data_t *track, midi_event_t *event)
 
     VoiceKeyOn(channel, instrument, 0, key, volume);
 
-    if ((instrument->flags & GENMIDI_FLAG_2VOICE) != 0)
+    if ((GENMIDI_FLAGS(instrument) & GENMIDI_FLAG_2VOICE) != 0)
     {
         VoiceKeyOn(channel, instrument, 1, key, volume);
     }

@@ -312,6 +312,20 @@ static void my_pclose3 (pipeinfo_t *p)
   free (puser);
 }
 
+#elif defined(__amigaos__)
+// -viddump pipes the game's sound and frames to encoder processes (ffmpeg,
+// x264, ...) through fork and exec. AmigaOS has neither (nor encoders that
+// fast), so the pipes fail and the game says so and plays on.
+
+static int my_popen3 (pipeinfo_t *p)
+{
+  return 0;
+}
+
+static void my_pclose3 (pipeinfo_t *p)
+{
+}
+
 #else // _WIN32
 // posix implementation
 // not tested

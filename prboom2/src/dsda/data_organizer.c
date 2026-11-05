@@ -161,6 +161,11 @@ static void dsda_InitWadDataDir(void) {
 
   for (i = 0; i < DATA_DIR_LIMIT; ++i) {
     if (dsda_data_dir_strings[i]) {
+#ifdef __amigaos__
+      // "Work:/name" would be the parent of Work: (the base may be a
+      // volume or an assign).
+      if (dsda_wad_data_dir[strlen(dsda_wad_data_dir) - 1] != ':')
+#endif
       strcat(dsda_wad_data_dir, "/");
       strcat(dsda_wad_data_dir, dsda_data_dir_strings[i]);
 

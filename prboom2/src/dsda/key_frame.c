@@ -95,7 +95,12 @@ void dsda_ExportKeyFrame(byte* buffer, int length) {
 
   if ((fp = fopen(name, "rb")) != NULL) {
     fclose(fp);
+#ifdef __amigaos__
+    // time_t is 32 bits here; %lld reads 64.
+    snprintf(name, 40, "backup-%010d-%lld.kf", timestamp, (long long) time(NULL));
+#else
     snprintf(name, 40, "backup-%010d-%lld.kf", timestamp, time(NULL));
+#endif
   }
 
   if (!M_WriteFile(name, buffer, length))
