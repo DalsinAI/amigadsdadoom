@@ -61,6 +61,18 @@ interpolated frames are more than a 68040 can draw), 22050 Hz sound with
 Doom's 8 channels, OPL2 music, the first game pad on.
 
 
+Installing
+----------
+
+The release archive (package/build-amiga.sh) holds the DSDADoom drawer and,
+beside it, Install-DSDADoom. The Installer checks for a 68040 or 68060, an
+FPU and OpenGPU's SDL2.module and SDL2_mixer.module, copies the drawer
+(keeping dsda-doom.cfg, dsda_doom_data and autoload on an update), and can
+fetch Freedoom 0.13.0 (sha256-checked) or copy your own IWAD into it. The
+program itself is one -m68040 -msoft-float build: the stove's fpuauto does
+its floating point on the FPU; the FPU is asked for because the SDL 2
+modules are hard float.
+
 How it is built: the route
 --------------------------
 

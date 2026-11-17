@@ -1,0 +1,52 @@
+{
+  "name": "DSDA-Doom",
+  "version": "0.24.3-amiga1-rc1",
+  "drawer": "DSDADoom",
+  "program": "dsda-doom",
+  "cpu": "68040",
+  "fpu": true,
+  "space": 6000000,
+  "modules": [
+    "SDL2.module",
+    "SDL2_mixer.module"
+  ],
+  "keep": [
+    "dsda-doom.cfg",
+    "dsda_doom_data",
+    "autoload"
+  ],
+  "parent": "Work:Games",
+  "badge": "../amiga/icons/art/dsda-doom.png",
+  "data": [
+    {
+      "what": "Freedoom, the free Doom data",
+      "files": [
+        "freedoom1.wad",
+        "freedoom2.wad"
+      ],
+      "optional": true,
+      "import": false,
+      "page": "https://freedoom.github.io",
+      "download": {
+        "url": "https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip",
+        "sha256": "3f9b264f3e3ce503b4fb7f6bdcb1f419d93c7b546f4df3e874dd878db9688f59",
+        "size": 24143781,
+        "root": "freedoom-0.13.0"
+      }
+    },
+    {
+      "what": "your own Doom, Heretic or Hexen IWAD",
+      "any": [
+        "doom1.wad",
+        "doom.wad",
+        "doom2.wad",
+        "tnt.wad",
+        "plutonia.wad",
+        "heretic.wad",
+        "hexen.wad"
+      ],
+      "import": true,
+      "optional": true
+    }
+  ]
+}

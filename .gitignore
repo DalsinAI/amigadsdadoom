@@ -8,3 +8,6 @@ analysis.txt
 levelstat.txt
 spec/support/wads/*
 !spec/support/wads/analysis_test.wad
+__pycache__/
+build/
+build-amiga-package/

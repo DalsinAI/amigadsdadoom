@@ -1,5 +1,6 @@
-# DSDA-Doom for AmigaOS 3.x / AmiCradle, 68040 + FPU, on OpenGPU's SDL 2.
-# Software renderer only.
+# DSDA-Doom for AmigaOS 3.x / AmiCradle, 68040 or 68060, on OpenGPU's SDL 2.
+# Software renderer only. One soft-float binary: the stove's fpuauto (open7
+# and later) does the floating point on the FPU when there is one.
 #
 #   make -f amiga/Makefile.amigaos STOVE=/path/to/os32-gcc16/prefix \
 #        NDK=/path/to/gfopensdk/OpenNDK/Include_H \
@@ -24,10 +25,10 @@ HOSTCC  ?= cc
 PYTHON  ?= python3
 CC      = $(STOVE)/bin/m68k-amigaos-gcc
 CXX     = $(STOVE)/bin/m68k-amigaos-g++
-CPU     ?= -m68040 -m68881
+CPU     ?= -m68040 -msoft-float
 # -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile (the kit's
 # sdl2-config gives it for GCC 16 too). No -ffast-math (upstream's CMake
-# has it): with -m68881 it makes GCC use fsin, fcos, fatan and the like,
+# has it): with hard float it makes GCC use fsin, fcos, fatan and the like,
 # which a 68040 or 68060 does not have and emulates slowly in software.
 OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
 SRCDIR  = prboom2/src
